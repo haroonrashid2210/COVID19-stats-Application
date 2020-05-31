@@ -1,0 +1,180 @@
+import React, { Component } from 'react';
+import {
+  ActivityIndicator,
+  Button,
+  View,
+  Text,
+  ScrollView,
+  Image,
+  StyleSheet,
+} from 'react-native';
+import { createAppContainer } from 'react-navigation';
+import { createStackNavigator } from 'react-navigation-stack';
+import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
+
+/**
+ * Home Screen Component
+ */
+class HomeScreen extends React.Component {
+  constructor() {
+    super();
+    // this.productList = [
+    //   new Product(1, 'Dell', 56000),
+    //   new Product(2, 'HP', 46000),
+    // ];
+  }
+  render() {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Button
+          title="Fetch"
+          onPress={() =>
+            this.props.navigation.navigate({
+              routeName: 'JSONData',
+            })
+          }
+        />
+      </View>
+    );
+  }
+}
+
+class APIDataScreen extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isLoading: true };
+  }
+
+  componentDidMount() {
+    this.getData();
+  }
+
+  getData() {
+    return fetch('https://jsonplaceholder.typicode.com/photos')
+      .then(response => response.json())
+      .then(responseJson => {
+        this.setState(
+          {
+            isLoading: false,
+            dataSource: responseJson,
+          },
+          function() {}
+        );
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
+
+  render() {
+    if (this.state.isLoading) {
+      return (
+        <View style={{ flex: 1, padding: 20 }}>
+          <ActivityIndicator size="large" />
+          <Text>Loading Data from JSON Placeholder API ...</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={{ paddingTop: 5 }}>
+        <FlatList
+          data={this.state.dataSource}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              activeOpacity={0.5}
+              onPress={() =>
+                this.props.navigation.navigate({
+                  routeName: 'ItemDetails',
+                  params: { itemObj: item },
+                })
+              }>
+              <View style={styles.listContainer}>
+                <Image
+                  style={{ width: 40, height: 40 }}
+                  source={{ uri: item.thumbnailUrl }}
+                />
+                <View style={{ paddingLeft: 5, paddingRight: 10 }}>
+                  <Text>{item.title}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  }
+}
+
+const ItemDetailsScreen = props => {
+  const item = props.navigation.getParam('itemObj');
+  return (
+    <View style={{ alignItems: 'center', paddingTop: 5 }}>
+      <Image
+        style={{ width: '50%', height: '50%' }}
+        source={{ uri: item.thumbnailUrl }}
+      />
+      <Text style={{ textAlign: 'center' }}>{item.title}</Text>
+    </View>
+  );
+};
+
+// Creating Stack Navigator
+const RootStack = createStackNavigator(
+  {
+    Home: HomeScreen,
+    JSONData: APIDataScreen,
+    ItemDetails: ItemDetailsScreen,
+  },
+  {
+    initialRouteName: 'Home',
+  }
+);
+
+const headerBackgroundColor = 'darkblue';
+
+// Styling Header of Item Details Screen
+APIDataScreen.navigationOptions = {
+  headerTitle: 'List of Items from API',
+  headerTintColor: 'white',
+  headerStyle: {
+    backgroundColor: headerBackgroundColor,
+  },
+};
+
+// Styling Header of Item Details Screen
+ItemDetailsScreen.navigationOptions = {
+  headerTitle: 'Item Details',
+  headerTintColor: 'white',
+  headerStyle: {
+    backgroundColor: headerBackgroundColor,
+  },
+};
+
+// Styling Header of Details Screen
+// DetailsScreen.navigationOptions = {
+//   headerTitle: 'Details',
+//   headerTintColor: 'white',
+//   headerStyle: {
+//     backgroundColor: headerBackgroundColor,
+//   },
+// };
+
+// Home Screen Does not have a Header
+HomeScreen.navigationOptions = {
+  header: null,
+};
+
+// Creating App Container to wrap Root Navigator
+export default createAppContainer(RootStack);
+
+const styles = StyleSheet.create({
+  listContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    padding: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: 'grey',
+    //backgroundColor: 'lightgrey'
+  },
+});
